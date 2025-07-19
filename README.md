@@ -1,2 +1,2 @@
-# ai-gw
-Artificial Intelligence Gateway
+# llm-gw
+Large Language Model Gateway
