@@ -30,6 +30,10 @@ RUN set -euo pipefail && \
 
 # Create a minimal non-root service user with no home directory
 RUN useradd --system --no-create-home --shell /sbin/nologin ${LLM_GW_USER}
+# Copy the LiteLLM Proxy configuration file
+ARG LITELLM_CONFIG_FILE=litellm_config.yaml
+COPY --chown=${LLM_GW_USER}:${LLM_GW_USER} --chmod=0400 ${LITELLM_CONFIG_FILE} /${LITELLM_CONFIG_FILE}
+
 USER ${LLM_GW_USER}
 WORKDIR /
 
