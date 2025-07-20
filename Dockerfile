@@ -24,6 +24,6 @@ ARG PIP_CMD=pip${PYTHON_VERSION}
 RUN set -euo pipefail && \
     ${DNF_INSTALL} python${PYTHON_VERSION} python${PYTHON_VERSION}-pip && \
     ${PIP_CMD} install --no-cache-dir --upgrade litellm[proxy]==${LITELL_VERSION} && \
-    ${DNF} remove -y python${PYTHON_VERSION}-pip && \
+    ${DNF} remove -y python${PYTHON_VERSION}-pip python3.12-setuptools && \
     ${DNF} clean all && \
     rm -rf /var/cache/dnf/* /var/log/dnf.log /var/log/yum.log /root/.cache/pip /tmp/*
