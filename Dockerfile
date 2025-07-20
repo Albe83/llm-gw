@@ -13,8 +13,8 @@ FROM ${BASE_IMAGE} AS base
 ARG DNF=microdnf
 ARG DNF_OPTS="--nodocs"
 ARG PYTHON_VERSION=3.12
-ARG LITELL_VERSION=1.74.3
-
+ARG LITELLM_VERSION=1.74.3
+ARG LLM_GW_USER="llm-gw"
 # Derived variables
 ARG DNF_INSTALL="${DNF} install -y ${DNF_OPTS}"
 ARG PIP_CMD=pip${PYTHON_VERSION}
@@ -23,7 +23,12 @@ ARG PIP_CMD=pip${PYTHON_VERSION}
 # Optimize DNF installation: use set -euo pipefail, avoid unnecessary caching and ensure cleanup
 RUN set -euo pipefail && \
     ${DNF_INSTALL} python${PYTHON_VERSION} python${PYTHON_VERSION}-pip && \
-    ${PIP_CMD} install --no-cache-dir --upgrade litellm[proxy]==${LITELL_VERSION} && \
+    ${PIP_CMD} install --no-cache-dir --upgrade litellm[proxy]==${LITELLM_VERSION} && \
     ${DNF} remove -y python${PYTHON_VERSION}-pip python3.12-setuptools && \
     ${DNF} clean all && \
     rm -rf /var/cache/dnf/* /var/log/dnf.log /var/log/yum.log /root/.cache/pip /tmp/*
+
+# Create a minimal non-root service user with no home directory
+RUN useradd --system --no-create-home --shell /sbin/nologin ${LLM_GW_USER}
+USER ${LLM_GW_USER}
+WORKDIR /
