@@ -32,3 +32,11 @@ RUN set -euo pipefail && \
 RUN useradd --system --no-create-home --shell /sbin/nologin ${LLM_GW_USER}
 USER ${LLM_GW_USER}
 WORKDIR /
+
+# Add OCI-compliant labels for better image metadata
+LABEL org.opencontainers.image.title="LLM Gateway" \
+      org.opencontainers.image.description="A lightweight container running LiteLLM Proxy with Oracle Linux." \
+      org.opencontainers.image.authors="Albe83" \
+      org.opencontainers.image.source="https://github.com/Albe83/llm-gw" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${LITELLM_VERSION}"
