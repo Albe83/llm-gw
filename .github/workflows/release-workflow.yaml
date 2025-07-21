@@ -54,3 +54,10 @@ jobs:
             images+="${tag}@${DIGEST} "
           done
           cosign sign --yes ${images}
+
+      - name: Install Syft
+        env:
+          SYFT_VERSION: v1.28.0
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+          | sh -s -- -v -b /usr/local/bin -dd $SYFT_VERSION
