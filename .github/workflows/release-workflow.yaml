@@ -73,14 +73,9 @@ jobs:
 
       - name: Attest SBOM
         env:
-          DIGEST: ${{ steps.docker_build.outputs.digest }}
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          DIGEST: ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }}@${{ steps.docker_build.outputs.digest }}
         run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign attest --type=spdxjson --predicate ./sbom.spdx.json --yes ${images}
+          cosign attest --type=spdxjson --predicate ./sbom.spdx.json --yes ${DIGEST}
 
       - name: Upload SBOM with GitHub CLI
         env:
