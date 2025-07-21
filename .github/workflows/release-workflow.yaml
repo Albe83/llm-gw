@@ -10,8 +10,8 @@ jobs:
       id-token: write   # required for OIDC keyless signing
       contents: read    # required to fetch code
     env:
-      RELEASE_TAG: ${{ github.ref_name }}
       IMAGE_NAME: llm-gw
+      IMAGE_TAG: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,5 +31,5 @@ jobs:
           push: true
           context: .
           tags: |
-            ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }}:${{ RELEASE_TAG }}
+            ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }}:latest
