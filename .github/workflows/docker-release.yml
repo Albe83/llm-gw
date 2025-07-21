@@ -9,10 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for OIDC keyless signing
-      contents: read    # required to checkout repository
+      contents: read    # required to fetch code
     env:
-      IMAGE_NAME: ${{ secrets.DH_USERNAME }}/llm-gw
-      COSIGN_VERSION: v2.5.3
+      IMAGE_NAME: ${{ secrets.DH_USERNAME }}/llm-gw   # base image name variable
+      COSIGN_VERSION: v2.5.3                          # cosign version variable
+      VERSION: ${{ github.ref_name }}                 # release tag as version
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,22 +24,18 @@ jobs:
           username: ${{ secrets.DH_USERNAME }}
           password: ${{ secrets.DH_TOKEN }}
 
-      - name: Set version
-        id: vars
-        run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
       - name: Build Docker image
         run: |
-          # Build image with dynamic version tag
+          # Build Docker image with dynamic tags
           docker build \
-            --tag $IMAGE_NAME:latest \
-            --tag $IMAGE_NAME:$VERSION \
+            --tag "$IMAGE_NAME:latest" \
+            --tag "$IMAGE_NAME:$VERSION" \
             .
 
       - name: Install Cosign
         run: |
-          # Download and install Cosign
-          wget https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-linux-amd64
+          # Download and install Cosign tool
+          wget "https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-linux-amd64"
           chmod +x cosign-linux-amd64
           sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 
@@ -46,9 +43,15 @@ jobs:
         id: oidc
         run: |
           # Retrieve OIDC token for keyless signing
-          OIDC_TOKEN=$(curl -sSL \
+          OIDC_RESPONSE=$(curl -sSL \
             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL")
+          # Ensure the response contains a value field
+          if ! echo "$OIDC_RESPONSE" | grep -q '"value"'; then
+            echo "Error: OIDC token response invalid: $OIDC_RESPONSE"
+            exit 1
+          fi
+          OIDC_TOKEN=$(echo "$OIDC_RESPONSE" | sed -E 's/.*"value":"([^"]+)".*/\1/')
           echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
 
       - name: Keyless sign Docker image
@@ -56,16 +59,16 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
           OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
         run: |
-          # Sign images using keyless OIDC
+          # Sign Docker images using Cosign with OIDC
           cosign sign \
             --identity-token "$OIDC_TOKEN" \
-            $IMAGE_NAME:$VERSION
+            "$IMAGE_NAME:$VERSION"
           cosign sign \
             --identity-token "$OIDC_TOKEN" \
-            $IMAGE_NAME:latest
+            "$IMAGE_NAME:latest"
 
       - name: Push Docker images
         run: |
-          # Push both tags
-          docker push $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:$VERSION
+          # Push signed images to Docker Hub
+          docker push "$IMAGE_NAME:latest"
+          docker push "$IMAGE_NAME:$VERSION"
