@@ -61,3 +61,20 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
           | sh -s -- -v -b /usr/local/bin -dd $SYFT_VERSION
+
+      - name: Generate SBOM
+        env:
+          IMAGE: ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+        run: |
+          syft -o spdx-json $IMAGE >> sbom.spdx.json
+
+      - name: Attest SBOM
+        env:
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign attest --type=spdxjson --predicate ./sbom.spdx.json --yes ${images}
