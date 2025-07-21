@@ -12,7 +12,7 @@ jobs:
       contents: read    # required to checkout repository
     env:
       IMAGE_NAME: ${{ secrets.DH_USERNAME }}/llm-gw
-      COSIGN_VERSION: v2.1.0
+      COSIGN_VERSION: v2.5.3
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
       - name: Install Cosign
         run: |
           # Download and install Cosign
-          wget https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-${{ env.COSIGN_VERSION }}-linux-amd64
+          wget https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-linux-amd64
           chmod +x cosign-${{ env.COSIGN_VERSION }}-linux-amd64
           sudo mv cosign-${{ env.COSIGN_VERSION }}-linux-amd64 /usr/local/bin/cosign
 
