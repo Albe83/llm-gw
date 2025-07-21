@@ -39,8 +39,8 @@ jobs:
         run: |
           # Download and install Cosign
           wget https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-linux-amd64
-          chmod +x cosign-${{ env.COSIGN_VERSION }}-linux-amd64
-          sudo mv cosign-${{ env.COSIGN_VERSION }}-linux-amd64 /usr/local/bin/cosign
+          chmod +x cosign-linux-amd64
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 
       - name: Fetch OIDC token
         id: oidc
