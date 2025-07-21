@@ -5,8 +5,14 @@ on:
     types: [published]
 
 jobs:
-  docker:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for OIDC keyless signing
+      contents: read    # required to checkout repository
+    env:
+      IMAGE_NAME: ${{ secrets.DH_USERNAME }}/llm-gw
+      COSIGN_VERSION: v2.1.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,11 +27,45 @@ jobs:
         id: vars
         run: echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DH_USERNAME }}/llm-gw:latest
-            ${{ secrets.DH_USERNAME }}/llm-gw:${{ env.VERSION }}
+      - name: Build Docker image
+        run: |
+          # Build image with dynamic version tag
+          docker build \
+            --tag $IMAGE_NAME:latest \
+            --tag $IMAGE_NAME:$VERSION \
+            .
+
+      - name: Install Cosign
+        run: |
+          # Download and install Cosign
+          wget https://github.com/sigstore/cosign/releases/download/${{ env.COSIGN_VERSION }}/cosign-${{ env.COSIGN_VERSION }}-linux-amd64
+          chmod +x cosign-${{ env.COSIGN_VERSION }}-linux-amd64
+          sudo mv cosign-${{ env.COSIGN_VERSION }}-linux-amd64 /usr/local/bin/cosign
+
+      - name: Fetch OIDC token
+        id: oidc
+        run: |
+          # Retrieve OIDC token for keyless signing
+          OIDC_TOKEN=$(curl -sSL \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL")
+          echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Keyless sign Docker image
+        env:
+          COSIGN_EXPERIMENTAL: 1
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          # Sign images using keyless OIDC
+          cosign sign \
+            --identity-token "$OIDC_TOKEN" \
+            $IMAGE_NAME:$VERSION
+          cosign sign \
+            --identity-token "$OIDC_TOKEN" \
+            $IMAGE_NAME:latest
+
+      - name: Push Docker images
+        run: |
+          # Push both tags
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$VERSION
