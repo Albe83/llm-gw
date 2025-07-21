@@ -33,8 +33,25 @@ jobs:
             ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }},enable=true
 
       - name: Docker Build
+        id: docker_build
         uses: docker/build-push-action@v6
         with:
           push: true
           context: .
           tags: ${{ steps.docker_meta.outputs.tags }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.5.3'
+
+      - name: Sign the images with GitHub OIDC Token
+        env:
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
