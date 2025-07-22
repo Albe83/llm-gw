@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # required for OIDC keyless signing
+      attestations: write
       contents: write
     env:
       IMAGE_NAME: llm-gw
