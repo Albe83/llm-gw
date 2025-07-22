@@ -6,11 +6,12 @@ on:
 
 jobs:
   build-and-push:
-    run-on: ubuntu-latest
-    permisions: []
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
-      - digest: ${{ steps.docker_builder.outputs.digest }}
-      - tags: ${{ steps.docker_metadata.outputs.tags }}
+      digest: ${{ steps.docker_builder.outputs.digest }}
+      tags: ${{ steps.docker_metadata.outputs.tags }}
     env:
       registry: ""
       namespace: ${{ secrets.DH_USERNAME }}
