@@ -10,7 +10,8 @@ jobs:
     permissions:
       contents: read
     env:
-      IMAGE_NAME: llm-gw
+      # IMAGE_NAME: llm-gw
+      IMAGE_NAME: albe83/llm-gw
     outputs:
       image-digest: ${{ steps.docker_build.outputs.digest }}
       image-tags: ${{ steps.docker_meta.outputs.tags }}
@@ -32,7 +33,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }},enable=true
+            ${{ env.IMAGE_NAME }},enable=true
           tags: |
             type=ref,event=tag
 
