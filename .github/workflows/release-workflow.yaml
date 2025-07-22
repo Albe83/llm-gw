@@ -18,7 +18,7 @@ jobs:
       namespace: ${{ env.namespace }}
       image: ${{ env.image }}
       digest: ${{ steps.docker_builder.outputs.digest }}
-      tags: ${{ steps.docker_metadata.outputs.tags }}
+      tags: ${{ steps.export_tags.outputs.tags }}
     steps:
       - name: Docker Metadata
         id: docker_metadata
@@ -28,6 +28,11 @@ jobs:
             ${{ env.namespace }}/${{ env.image }},enable=true
           tags: |
             type=ref,event=tag
+
+      - name: Export Tags
+        id: export_tags
+        run: |
+          echo "echo '${{ steps.docker_metadata.outputs.tags }}'" >> $GITHUB_OUTPUT
             
       - name: Checkout
         id: git_checkout
@@ -51,6 +56,7 @@ jobs:
           context: .
           tags: ${{ steps.docker_metadata.outputs.tags }}
 
+
   provenance:
     needs:
       - build
@@ -62,7 +68,7 @@ jobs:
       registry: ${{ needs.build.outputs.registry }}
       namespace: ${{ needs.build.outputs.namespace }}
       image: ${{ needs.build.outputs.image }}
-      digest: ${{ needs.build.digest }}
+      digest: ${{ needs.build.outputs.digest }}
     steps:
       - name: Docker Hub Login
         id: registry_login
