@@ -35,7 +35,6 @@ jobs:
             ${{ secrets.DH_USERNAME }}/${{ env.IMAGE_NAME }},enable=true
           tags: |
             type=ref,event=tag
-            type=raw,value=latest
 
       - name: Docker Build and Push
         id: docker_build
