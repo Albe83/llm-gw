@@ -5,7 +5,7 @@ on:
       - published
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,8 +13,8 @@ jobs:
       digest: ${{ steps.docker_builder.outputs.digest }}
       tags: ${{ steps.docker_metadata.outputs.tags }}
     env:
-      registry: ""
-      namespace: ${{ secrets.DH_USERNAME }}
+      registry: docker.io
+      namespace: albe83
       image: llm-gw
     steps:
       - name: Docker Metadata
@@ -47,3 +47,31 @@ jobs:
           push: true
           context: .
           tags: ${{ steps.docker_metadata.outputs.tags }}
+
+  provenance:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    env:
+      registry: ${{ needs.build.outputs.registry }}
+      namespace: ${{ needs.build.outputs.namespace }}
+      image: ${{ needs.build.outputs.image }}
+      digest: ${{ needs.build.digest }}
+    steps:
+      - name: Docker Hub Login
+        id: registry_login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DH_USERNAME }}
+          password: ${{ secrets.DH_TOKEN }}
+
+      - name: Attest build provenance
+        id: attest_provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.registry }}/${{ env.namespace }}/${{ env.image }}
+          subject-digest: ${{ env.digest }}
+          push-to-registry: true
