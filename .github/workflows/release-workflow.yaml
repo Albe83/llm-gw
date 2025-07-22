@@ -93,6 +93,12 @@ jobs:
     env:
       IMAGE_NAME: llm-gw
     steps:
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DH_USERNAME }}
+          password: ${{ secrets.DH_TOKEN }}
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v1
         with:
