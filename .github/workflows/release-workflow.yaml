@@ -18,7 +18,7 @@ jobs:
       namespace: ${{ env.namespace }}
       image: ${{ env.image }}
       digest: ${{ steps.docker_builder.outputs.digest }}
-      tags: ${{ steps.export_tags.outputs.tags }}
+      tags: ${{ steps.docker_metadata.outputs.tags }}
     steps:
       - name: Docker Metadata
         id: docker_metadata
@@ -133,3 +133,33 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ github.event.release.tag_name }} ./sbom.spdx.json
+
+  sign:
+    needs:
+      - build
+      - provenance
+      - sbom
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    env:
+      cosign-release: 'v2.5.3'
+      
+      digest: ${{ needs.build.outputs.digest }}
+      tags: ${{ needs.build.outputs.tags }}
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: ${{ env.cosign-release }}
+
+      - name: Sign the images with GitHub OIDC Token
+        env:
+          DIGEST: ${{ env.digest }}
+          TAGS: ${{ env.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
