@@ -54,6 +54,12 @@ jobs:
     env:
       IMAGE_NAME: llm-gw
     steps:
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DH_USERNAME }}
+          password: ${{ secrets.DH_TOKEN }}
+
       - name: Install Cosign (for Syft verification)
         uses: sigstore/cosign-installer@v3
         with:
