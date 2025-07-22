@@ -16,7 +16,7 @@ jobs:
     outputs:
       registry: ${{ env.registry }}
       namespace: ${{ env.namespace }}
-      image: ${{ env.image }
+      image: ${{ env.image }}
       digest: ${{ steps.docker_builder.outputs.digest }}
       tags: ${{ steps.docker_metadata.outputs.tags }}
     steps:
