@@ -47,7 +47,7 @@ COPY --chown=${LLM_GW_USER}:${LLM_GW_USER} --chmod=0400 ${LITELLM_CONFIG_FILE_RE
 USER ${LLM_GW_USER}
 WORKDIR /
 ENV LITELLM_CONFIG=${LITELLM_CONFIG_FILE_TARGET}
-
+ENV PORT=4000
 
 # Add OCI-compliant labels for better image metadata
 LABEL org.opencontainers.image.title="LLM Gateway" \
