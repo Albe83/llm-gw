@@ -30,16 +30,24 @@ RUN set -euo pipefail && \
 
 # Create a minimal non-root service user with no home directory
 RUN useradd --system --no-create-home --shell /sbin/nologin ${LLM_GW_USER}
-# Copy the LiteLLM Proxy configuration file
-ARG LITELLM_CONFIG_FILE_NAME=litellm_config.yaml
-ARG LITELLM_CONFIG_FILE_REPO_PATH=./
-ARG LITELLM_CONFIG_FILE_TARGET_PATH=/
-ARG LITELLM_CONFIG_FILE=/litellm_config.yaml
-COPY --chown=${LLM_GW_USER}:${LLM_GW_USER} --chmod=0400 "${LITELLM_CONFIG_FILE_REPO_PATH}${LITELLM_CONFIG_FILE}" "${LITELLM_CONFIG_FILE_TARGET_PATH}${LITELLM_CONFIG_FILE}"
 
+# Copy the LiteLLM Proxy entrypoint script
+# Ensure the entrypoint script is executable and owned by the service user
+COPY --chown=${LLM_GW_USER}:${LLM_GW_USER} --chmod=0500 ./entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Copy the LiteLLM Proxy configuration file
+ARG LITELLM_CONFIG_FILE_REPO=./litellm_config.yaml
+ARG LITELLM_CONFIG_FILE_TARGET=/litellm_config.yaml
+COPY --chown=${LLM_GW_USER}:${LLM_GW_USER} --chmod=0400 ${LITELLM_CONFIG_FILE_REPO} ${LITELLM_CONFIG_FILE_TARGET}
+
+# Set execution environment
+# Use the service user to run the application
+# Set the working directory to root for simplicity and environment variables
 USER ${LLM_GW_USER}
 WORKDIR /
-ENTRYPOINT ["/usr/local/bin/litellm", "-c", "${LITELLM_CONFIG_FILE_TARGET_PATH}${LITELLM_CONFIG_FILE_TARGET_PATH}"]
+ENV LITELLM_CONFIG=${LITELLM_CONFIG_FILE_TARGET}
+
 
 # Add OCI-compliant labels for better image metadata
 LABEL org.opencontainers.image.title="LLM Gateway" \
