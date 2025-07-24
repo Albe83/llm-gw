@@ -6,168 +6,44 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      registry: docker.io
-      namespace: albe83
-      image: llm-gw
-    outputs:
-      registry: ${{ env.registry }}
-      namespace: ${{ env.namespace }}
-      image: ${{ env.image }}
-      digest: ${{ steps.docker_builder.outputs.digest }}
-      tags: ${{ steps.docker_metadata.outputs.tags }}
-    steps:
-      - name: Docker Metadata
-        id: docker_metadata
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ env.namespace }}/${{ env.image }},enable=true
-          tags: |
-            type=ref,event=tag
-            
-      - name: Checkout
-        id: git_checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker Hub Login
-        id: registry_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.namespace }}
-          password: ${{ secrets.DH_TOKEN }}
-
-      - name: Docker Build and Push
-        id: docker_builder
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          context: .
-          tags: ${{ steps.docker_metadata.outputs.tags }}
+    uses: ./.github/workflows/build.yaml
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}
 
   provenance:
     needs:
       - build
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      attestations: write
-    env:
+    uses: ./.github/workflows/provenance.yaml
+    with:
       registry: ${{ needs.build.outputs.registry }}
       namespace: ${{ needs.build.outputs.namespace }}
       image: ${{ needs.build.outputs.image }}
       digest: ${{ needs.build.outputs.digest }}
-    steps:
-      - name: Docker Hub Login
-        id: registry_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.namespace }}
-          password: ${{ secrets.DH_TOKEN }}
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ${{ env.registry }}/${{ env.namespace }}/${{ env.image }}
-          subject-digest: ${{ env.digest }}
-          push-to-registry: true
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}
 
   sbom:
     needs:
       - build
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    env:
+    uses: ./.github/workflows/sbom.yaml
+    with:
       namespace: ${{ needs.build.outputs.namespace }}
       image: ${{ needs.build.outputs.image }}
       digest: ${{ needs.build.outputs.digest }}
-
-      cosign-release: 'v2.5.3'
-      syft-release: 'v1.28.0'
-    steps:
-      - name: Checkout
-        id: git_checkout
-        uses: actions/checkout@v4
-
-      - name: Docker Hub Login
-        id: registry_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.namespace }}
-          password: ${{ secrets.DH_TOKEN }}
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: ${{ env.cosign-release }}
-
-      - name: Install Syft
-        env:
-          SYFT_VERSION: ${{ env.syft-release }}
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-          | sh -s -- -v -b /usr/local/bin -d $SYFT_VERSION
-
-      - name: Generate SBOM
-        env:
-          IMAGE: ${{ env.namespace }}/${{ env.image }}:${{ github.ref_name }}
-        run: |
-          syft -o spdx-json $IMAGE >> sbom.spdx.json
-
-      - name: Attest SBOM
-        env:
-          DIGEST: ${{ env.namespace }}/${{ env.image }}@${{ env.digest }}
-        run: |
-          cosign attest --type=spdxjson --predicate ./sbom.spdx.json --yes ${DIGEST}
-
-      - name: Upload SBOM to GitHub
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ github.event.release.tag_name }} ./sbom.spdx.json
+      tag: ${{ github.event.release.tag_name }}
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sign:
     needs:
       - build
       - provenance
       - sbom
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    env:
-      cosign-release: 'v2.5.3'
-
+    uses: ./.github/workflows/sign.yaml
+    with:
       namespace: ${{ needs.build.outputs.namespace }}
       digest: ${{ needs.build.outputs.digest }}
       tags: ${{ needs.build.outputs.tags }}
-    steps:
-      - name: Docker Hub Login
-        id: registry_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.namespace }}
-          password: ${{ secrets.DH_TOKEN }}
-          
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: ${{ env.cosign-release }}
-
-      - name: Sign the images with GitHub OIDC Token
-        env:
-          DIGEST: ${{ env.digest }}
-          TAGS: ${{ env.tags }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}

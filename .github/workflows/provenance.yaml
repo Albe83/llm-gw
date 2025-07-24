@@ -1,0 +1,44 @@
+name: Provenance
+on:
+  workflow_call:
+    inputs:
+      registry:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      digest:
+        required: true
+        type: string
+    secrets:
+      DH_TOKEN:
+        required: true
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    env:
+      registry: ${{ inputs.registry }}
+      namespace: ${{ inputs.namespace }}
+      image: ${{ inputs.image }}
+      digest: ${{ inputs.digest }}
+    steps:
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.namespace }}
+          password: ${{ secrets.DH_TOKEN }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.registry }}/${{ env.namespace }}/${{ env.image }}
+          subject-digest: ${{ env.digest }}
+          push-to-registry: true
