@@ -1,0 +1,81 @@
+name: Publish Helm Chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: Registry namespace/username
+        required: true
+        type: string
+      repository:
+        description: Chart repository name
+        required: true
+        type: string
+      chart_path:
+        description: Path to the Helm chart
+        required: false
+        default: chart/llm-gw
+        type: string
+      registry:
+        description: OCI registry host
+        required: false
+        default: registry-1.docker.io
+        type: string
+  workflow_call:
+    inputs:
+      namespace:
+        description: Registry namespace/username
+        required: true
+        type: string
+      repository:
+        description: Chart repository name
+        required: true
+        type: string
+      chart_path:
+        description: Path to the Helm chart
+        required: false
+        default: chart/llm-gw
+        type: string
+      registry:
+        description: OCI registry host
+        required: false
+        default: registry-1.docker.io
+        type: string
+    secrets:
+      DH_TOKEN:
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Login to registry
+        env:
+          HELM_REGISTRY: ${{ inputs.registry }}
+          HELM_NAMESPACE: ${{ inputs.namespace }}
+          HELM_PASSWORD: ${{ secrets.DH_TOKEN }}
+        run: |
+          helm registry login "$HELM_REGISTRY" -u "$HELM_NAMESPACE" --password-stdin <<< "$HELM_PASSWORD"
+
+      - name: Package chart
+        env:
+          CHART_PATH: ${{ inputs.chart_path }}
+        run: |
+          mkdir -p packaged
+          helm package "$CHART_PATH" --destination packaged
+          echo "CHART_FILE=$(ls packaged/*.tgz)" >> "$GITHUB_ENV"
+
+      - name: Push chart
+        env:
+          CHART_FILE: ${{ env.CHART_FILE }}
+          HELM_REGISTRY: ${{ inputs.registry }}
+          HELM_NAMESPACE: ${{ inputs.namespace }}
+          HELM_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          helm push "$CHART_FILE" oci://$HELM_REGISTRY/$HELM_NAMESPACE/$HELM_REPOSITORY
