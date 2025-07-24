@@ -25,7 +25,7 @@ fi
 # fi
 
 # Build final command
-FINAL_CMD="$CMD $*"
+FINAL_CMD="$CMD \"$@\""
 
 # Show the final command (for debugging)
 echo "[ENTRYPOINT] Final command: $FINAL_CMD"
