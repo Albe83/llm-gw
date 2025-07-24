@@ -31,3 +31,6 @@ nodeAffinityPreset:
 
 
 resourcesPreset: "none"
+
+# Environment variables to be injected via ConfigMap
+env: {}
