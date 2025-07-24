@@ -20,6 +20,22 @@ on:
       DH_TOKEN:
         description: Docker registry token
         required: true
+    outputs:
+      registry:
+        description: Docker registry
+        value: ${{ jobs.build.outputs.registry }}
+      namespace:
+        description: Registry namespace/username
+        value: ${{ jobs.build.outputs.namespace }}
+      image:
+        description: Docker image name
+        value: ${{ jobs.build.outputs.image }}
+      digest:
+        description: Image digest
+        value: ${{ jobs.build.outputs.digest }}
+      tags:
+        description: Image tags
+        value: ${{ jobs.build.outputs.tags }}
 
 jobs:
   build:
