@@ -10,6 +10,10 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: []
 
+service:
+  type: ClusterIP
+  port: 80
+
 podSecurityContext:
   enabled: false
   fsGroup: 1001
@@ -33,4 +37,5 @@ nodeAffinityPreset:
 resourcesPreset: "none"
 
 # Environment variables to be injected via ConfigMap
-env: {}
+env:
+  PORT: 4000
