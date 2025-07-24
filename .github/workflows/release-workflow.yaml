@@ -114,7 +114,7 @@ jobs:
           SYFT_VERSION: ${{ env.syft-release }}
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-          | sh -s -- -v -b /usr/local/bin -dd $SYFT_VERSION
+          | sh -s -- -v -b /usr/local/bin -d $SYFT_VERSION
 
       - name: Generate SBOM
         env:
