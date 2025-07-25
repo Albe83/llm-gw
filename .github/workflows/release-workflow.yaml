@@ -33,6 +33,9 @@ jobs:
     needs:
       - build
     uses: ./.github/workflows/sbom.yaml
+    permissions:
+      id-token: write
+      contents: write
     with:
       namespace: ${{ needs.build.outputs.namespace }}
       image: ${{ needs.build.outputs.image }}
