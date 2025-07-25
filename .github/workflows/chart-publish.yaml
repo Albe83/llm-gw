@@ -84,9 +84,8 @@ jobs:
           CHART_FILE: ${{ env.CHART_FILE }}
           HELM_REGISTRY: ${{ inputs.registry }}
           HELM_NAMESPACE: ${{ inputs.namespace }}
-          HELM_REPOSITORY: ${{ inputs.repository }}
         run: |
-          helm push "$CHART_FILE" oci://$HELM_REGISTRY/$HELM_NAMESPACE/$HELM_REPOSITORY
+          helm push "$CHART_FILE" oci://$HELM_REGISTRY/$HELM_NAMESPACE
 
       - name: Upload chart to GitHub Release
         if: inputs.tag != ''
