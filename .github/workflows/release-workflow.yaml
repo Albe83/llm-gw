@@ -18,10 +18,14 @@ jobs:
     needs:
       - build
     uses: ./.github/workflows/provenance.yaml
+    permissions:
+      id-token: write
+      attestations: write
     with:
       registry: ${{ needs.build.outputs.registry }}
       namespace: ${{ needs.build.outputs.namespace }}
       image: ${{ needs.build.outputs.image }}
+      digest: ${{ needs.build.outputs.digest }}
     secrets:
       DH_TOKEN: ${{ secrets.DH_TOKEN }}
 
