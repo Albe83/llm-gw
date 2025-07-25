@@ -61,15 +61,15 @@ jobs:
 
   chart:
     needs:
-      - sign
+      - build
     uses: ./.github/workflows/chart-publish.yaml
     permissions:
       contents: write
     with:
-      namespace: ${{ needs.build.outputs.namespace }}
-      repository: llm-gw-chart
       chart_path: chart/llm-gw
-      registry: registry-1.docker.io
+      repository: llm-gw-chart
+      namespace: ${{ needs.build.outputs.namespace }}
+      registry: ${{ needs.build.outputs.registry }}
       tag: ${{ github.event.release.tag_name }}
     secrets:
       DH_TOKEN: ${{ secrets.DH_TOKEN }}
