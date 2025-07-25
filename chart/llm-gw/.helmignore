@@ -21,6 +21,3 @@
 .idea/
 *.tmproj
 .vscode/
-
-# Ignore downloaded subcharts
-charts/
