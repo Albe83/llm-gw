@@ -40,7 +40,6 @@ jobs:
       digest: ${{ needs.build.outputs.digest }}
     secrets:
       DH_TOKEN: ${{ secrets.DH_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sign:
     needs:
