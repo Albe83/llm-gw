@@ -58,3 +58,18 @@ jobs:
       tags: ${{ needs.build.outputs.tags }}
     secrets:
       DH_TOKEN: ${{ secrets.DH_TOKEN }}
+
+  chart:
+    needs:
+      - sign
+    uses: ./.github/workflows/chart-publish.yaml
+    permissions:
+      contents: write
+    with:
+      namespace: ${{ needs.build.outputs.namespace }}
+      repository: llm-gw-chart
+      chart_path: chart/llm-gw
+      registry: registry-1.docker.io
+      tag: ${{ github.event.release.tag_name }}
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}
