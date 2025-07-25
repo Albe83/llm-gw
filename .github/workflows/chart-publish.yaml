@@ -21,6 +21,10 @@ on:
         required: false
         default: registry-1.docker.io
         type: string
+      tag:
+        description: GitHub release tag to upload the chart to
+        required: false
+        type: string
   workflow_call:
     inputs:
       namespace:
@@ -40,6 +44,10 @@ on:
         description: OCI registry host
         required: false
         default: registry-1.docker.io
+        type: string
+      tag:
+        description: GitHub release tag to upload the chart to
+        required: false
         type: string
     secrets:
       DH_TOKEN:
@@ -79,3 +87,12 @@ jobs:
           HELM_REPOSITORY: ${{ inputs.repository }}
         run: |
           helm push "$CHART_FILE" oci://$HELM_REGISTRY/$HELM_NAMESPACE/$HELM_REPOSITORY
+
+      - name: Upload chart to GitHub Release
+        if: inputs.tag != ''
+        env:
+          CHART_FILE: ${{ env.CHART_FILE }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$RELEASE_TAG" "$CHART_FILE" --clobber
