@@ -76,7 +76,7 @@ jobs:
           CHART_PATH: ${{ inputs.chart_path }}
         run: |
           mkdir -p packaged
-          helm package "$CHART_PATH" --destination packaged
+          helm package "$CHART_PATH" --destination packaged --dependency-update
           echo "CHART_FILE=$(ls packaged/*.tgz)" >> "$GITHUB_ENV"
 
       - name: Push chart
