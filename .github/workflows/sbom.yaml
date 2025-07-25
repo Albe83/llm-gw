@@ -33,9 +33,6 @@ on:
       DH_TOKEN:
         description: Docker registry token
         required: true
-      GITHUB_TOKEN:
-        description: GitHub token
-        required: true
     outputs:
       sbom-path:
         description: Path to generated SBOM file
@@ -93,6 +90,6 @@ jobs:
 
       - name: Upload SBOM to GitHub
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh release upload ${{ inputs.tag }} ./sbom.spdx.json
