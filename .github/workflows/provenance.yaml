@@ -16,6 +16,10 @@ on:
         description: Docker image name
         required: true
         type: string
+      digest:
+        description: Image digest
+        required: true
+        type: string
   workflow_call:
     inputs:
       registry:
@@ -31,45 +35,39 @@ on:
         description: Docker image name
         required: true
         type: string
+      digest:
+        description: Image digest
+        required: true
+        type: string
     secrets:
       DH_TOKEN:
         required: true
     outputs:
       registry:
         description: Docker registry
-        value: ${{ jobs.build.outputs.registry }}
+        value: ${{ inputs.registry }}
       namespace:
         description: Registry namespace/username
-        value: ${{ jobs.build.outputs.namespace }}
+        value: ${{ inputs.namespace }}
       image:
         description: Docker image name
-        value: ${{ jobs.build.outputs.image }}
+        value: ${{ inputs.image }}
       digest:
         description: Image digest
-        value: ${{ jobs.build.outputs.digest }}
+        value: ${{ inputs.digest }}
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yaml
-    with:
-      registry: ${{ inputs.registry }}
-      namespace: ${{ inputs.namespace }}
-      image: ${{ inputs.image }}
-    secrets:
-      DH_TOKEN: ${{ secrets.DH_TOKEN }}
 
   provenance:
-    needs:
-      - build
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
     env:
-      registry: ${{ needs.build.outputs.registry }}
-      namespace: ${{ needs.build.outputs.namespace }}
-      image: ${{ needs.build.outputs.image }}
-      digest: ${{ needs.build.outputs.digest }}
+      registry: ${{ inputs.registry }}
+      namespace: ${{ inputs.namespace }}
+      image: ${{ inputs.image }}
+      digest: ${{ inputs.digest }}
     steps:
       - name: Docker Hub Login
         id: registry_login
