@@ -49,35 +49,12 @@ jobs:
       - build
       - provenance
       - sbom
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/sign.yaml
     permissions:
       id-token: write
-    env:
-      cosign-release: 'v2.5.3'
-
+    with:
       namespace: ${{ needs.build.outputs.namespace }}
       digest: ${{ needs.build.outputs.digest }}
       tags: ${{ needs.build.outputs.tags }}
-    steps:
-      - name: Docker Hub Login
-        id: registry_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.namespace }}
-          password: ${{ secrets.DH_TOKEN }}
-          
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: ${{ env.cosign-release }}
-
-      - name: Sign the images with GitHub OIDC Token
-        env:
-          DIGEST: ${{ env.digest }}
-          TAGS: ${{ env.tags }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
+    secrets:
+      DH_TOKEN: ${{ secrets.DH_TOKEN }}
