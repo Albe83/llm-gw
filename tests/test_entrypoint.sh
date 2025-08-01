@@ -29,5 +29,6 @@ trap cleanup EXIT
 OUTPUT=$(LITELLM_CONFIG="$CONFIG" sh "$ENTRYPOINT" --prompt "hello world" 2>&1 || true)
 
 echo "$OUTPUT" | grep -Fq "[ENTRYPOINT] Using config: $CONFIG"
-echo "$OUTPUT" | grep -Fq -- "--config \"$CONFIG\""
-echo "$OUTPUT" | grep -Fq -- '"--prompt hello world"'
+echo "$OUTPUT" | grep -Fq -- "--config $CONFIG"
+echo "$OUTPUT" | grep -Fq -- "--prompt hello world"
+echo "$OUTPUT" | grep -Fq -- "dummy litellm --config $CONFIG --prompt hello world"

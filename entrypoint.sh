@@ -9,26 +9,28 @@ CMD="/usr/local/bin/litellm"
 
 echo "[ENTRYPOINT] Preparing command..."
 
-# Add --config option if LITELLM_CONFIG is set and valid
+# Build up the command using positional parameters to avoid quoting issues
 if [ -n "$LITELLM_CONFIG" ] && [ -f "$LITELLM_CONFIG" ] && [ -s "$LITELLM_CONFIG" ]; then
     echo "[ENTRYPOINT] Using config: $LITELLM_CONFIG"
-    CMD="$CMD --config \"$LITELLM_CONFIG\""
+    set -- "$CMD" --config "$LITELLM_CONFIG" "$@"
 else
     echo "[ENTRYPOINT] No valid config file found or LITELLM_CONFIG not set."
+    set -- "$CMD" "$@"
 fi
 
 # Future variables logic
 # Example:
 # if [ -n "$SOME_OTHER_VAR" ]; then
 #     echo "[ENTRYPOINT] Adding option for SOME_OTHER_VAR: $SOME_OTHER_VAR"
-#     CMD="$CMD --other-option \"$SOME_OTHER_VAR\""
+#     set -- "$1" --other-option "$SOME_OTHER_VAR" "${@:2}"
 # fi
 
-# Build final command
-FINAL_CMD="$CMD \"$@\""
-
 # Show the final command (for debugging)
-echo "[ENTRYPOINT] Final command: $FINAL_CMD"
+printf '[ENTRYPOINT] Final command:'
+for arg in "$@"; do
+    printf ' %s' "$arg"
+done
+printf '\n'
 
 # Execute the command
-exec sh -c "$FINAL_CMD"
+exec "$@"
